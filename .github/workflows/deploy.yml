@@ -1,0 +1,57 @@
+name: React CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout Code
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Cache npm Dependencies
+      - name: Cache npm packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # Install Dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # Lint Check
+      - name: Run ESLint
+        run: npm run lint --if-present
+
+      # Security Audit
+      - name: Run Security Audit
+        run: npm audit --audit-level=high
+
+      # Build React App
+      - name: Build Project
+        run: npm run build
+
+      # Upload Build Files
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-build
+          path: dist
+
+      # Deployment Success Message
+      - name: Deployment Ready
+        run: echo "React Application Build Successful"
